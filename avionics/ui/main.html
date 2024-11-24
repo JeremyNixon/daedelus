@@ -1,0 +1,44 @@
+<div id="toucharea"></div>
+
+<style>
+  body {
+    margin: 0;
+  }
+  #toucharea {
+    width: 100vw;
+    height: 100vh;
+  }
+</style>
+
+<script>
+  const ws = new WebSocket(window.location.href.replace('http', 'ws'));
+  const ta = document.querySelector('#toucharea');
+  ta.addEventListener('touchstart', update);
+  ta.addEventListener('touchmove', update);
+
+  let throttle = 0;
+  let yaw = 128;
+  let pitch = 128;
+  let roll = 128;
+
+  const bround = a => Math.round(Math.max(0, Math.min(a,255)));
+  function update(e) {
+    e.preventDefault();
+    let l = false, r = false;
+    for (const t of e.touches) {
+      const r = ta.getBoundingClientRect();
+      const x = t.clientX / r.width;
+      const y = t.clientY / r.height;
+      if (x < .5) {
+        throttle = bround((1-y) * 255);
+        yaw = bround(x * 2 * 255);
+      }
+      else {
+        pitch = bround((1-y) * 255);
+        roll = bround((x - .5) * 2 * 255);
+      }
+      const a = Uint8Array.from([throttle, yaw, pitch, roll]);
+      ws.send(a);
+    }
+  }
+</script>
